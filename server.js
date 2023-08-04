@@ -2,21 +2,24 @@ const express=require('express');
 const cors=require('cors');
 const app=express();
 const models=require('./models');
+const multer=require("multer");
 const port="8080";
+const upload=multer({
+    storage:multer.diskStorage({
+        destination:function(req, file, cb){
+            cb(null, "uploads/");
+        },
+        filename:function(req, file, cb){
+            cb(null, file.originalname)
+        }
+    })
+})
 
 
 app.use(express.json());
 app.use(cors()) //브라우저의 cors 이슈를 막기 위해 사용하는 코드
+app.use("/uploads", express.static("uploads"));
 app.get('/products', (req, res) => {
-   /*  const query=req.query;
-    console.log('queryString:', query)
-    res.send({
-        products: [
-            {id:0, name : "독버섯조명", price:89000, seller : "유니스", imageUrl:"img/products/product01.jpg"},
-            {id:1, name : "허리아작의자", price:91000, seller : "더휴먼", imageUrl:"img/products/product02.jpg"},
-            {id:2, name : "잘록거울", price:180000, seller : "더부엌", imageUrl:"img/products/product03.jpg"}
-        ]
-    }) */
     models.Product.findAll(
         {
             /* limit:1 */
@@ -34,13 +37,16 @@ app.get('/products', (req, res) => {
         })
     }).catch((error)=>{
         console.error(error);
-        res.send('에러발생')
+        res.status(400).send('에러발생')
     })
 })
 
 app.post('/products', (req, res) => {
     const body=req.body;
     const {name, description, seller, price, imageUrl} = body;
+    if(!name|| !description|| !seller|| !price|| !imageUrl){
+        res.send("모든 필드를 입력해주세요")
+    }
     models.Product.create({
         name,
         description,
@@ -52,7 +58,7 @@ app.post('/products', (req, res) => {
         res.send({result, })
     }).catch((error) =>{
         console.error(error);
-        res.send('문제발생')
+        res.status(400).send('문제발생')
     })
 })
 
@@ -71,7 +77,14 @@ app.get("/products/:id", (req, res)=>{
         })
     }).catch((error)=>{
         console.error();
-        res.send('상품조회가 에러가 발생함')
+        res.status(400).send('상품조회가 에러가 발생함')
+    })
+})
+
+app.post('/image', upload.single('image'), (req, res) =>{
+    const file=req.file;
+    res.send({
+        imageUrl:file.path
     })
 })
 app.listen(port, () =>{
