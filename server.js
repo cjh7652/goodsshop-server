@@ -26,7 +26,7 @@ app.get('/products', (req, res) => {
             order:[
                 ["createdAt", "DESC"] /* 오름차순: ASC,  내림차순: DESC */
             ],
-            attributes:["id", "name","price", "seller", "imageUrl", "createdAt"],
+            attributes:["id", "name","price", "seller", "imageUrl", "createdAt", "soldout"],
     
     }
     )
@@ -78,6 +78,27 @@ app.get("/products/:id", (req, res)=>{
     }).catch((error)=>{
         console.error();
         res.status(400).send('상품조회가 에러가 발생함')
+    })
+})
+app.post("/purchase/:id", (req, res)=>{
+    const {id} = req.params;
+    models.Product.update(
+        {
+            soldout:1,
+        },
+        {
+            where: {
+                id,
+            }
+        }
+    )
+    .then((result)=>{
+        res.send({
+            result:true,
+        })
+    }).catch((error) =>{
+        console.error(error);
+        res.status(500).send("에러발생")
     })
 })
 
